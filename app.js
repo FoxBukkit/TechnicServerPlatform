@@ -4,15 +4,12 @@ var events = require("events");
 var crypto = require("crypto");
 var zip = require("node-zip");
 
-var modpack = process.argv[2];
-var build = process.argv[3];
-
 http.globalAgent.maxSockets = 2;
 
 var TEKKIT_MAIN_SOLDER = "http://solder.technicpack.net/api/";
 var MOD_STATUS_FILENAME = ".mod_status.json";
 
-getModpackFromSolder(TEKKIT_MAIN_SOLDER, modpack, build).on("fail", function(solderURL, modpack, build, e) {
+getModpackFromSolder(TEKKIT_MAIN_SOLDER, process.argv[2], process.argv[3]).on("fail", function(solderURL, modpack, build, e) {
 		getSolderURLFromTechnicAPI(modpack, build).on("fail", function(modpack, build, e) {
 			console.log("Error on modpack [" + modpack + "] on getting solder URL: " + e);
 		}).on("success", function(modpack, build, solderURL) {
