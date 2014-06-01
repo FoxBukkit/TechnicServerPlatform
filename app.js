@@ -208,33 +208,30 @@ function installModpackFromSolder(solderURL, modpack, build, data) {
 					delete modStatus.trackedFiles[modName];
 				}
 			}
+			
+			var decrementModCounterAndCheckForSave = function() {
+				modCounter--;
+				if(modCounter < 1) {
+					modStatus.buildInfo = buildInfo;
+					modStatus.build = build;
+					modStatus.modpack = modpack;
+					modStatus.mcversion = data.minecraft;
+					fs.writeFileSync(MOD_STATUS_FILENAME, JSON.stringify(modStatus), {encoding: "utf8", mode: 0644});
+				}
+			};
 
 			for(var modName in buildInfo) {
 				var mod = buildInfo[modName];
 				var oldMod = modStatus.buildInfo[modName];
 				if(oldMod && oldMod.version == mod.version) {
-					modCounter--;
-					if(modCounter < 1) {
-						modStatus.buildInfo = buildInfo;
-						modStatus.build = build;
-						modStatus.modpack = modpack;
-						modStatus.mcversion = data.minecraft;
-						fs.writeFileSync(MOD_STATUS_FILENAME, JSON.stringify(modStatus), {encoding: "utf8", mode: 0644});
-					}
+					decrementModCounterAndCheckForSave();
 					continue;
 				}
 				console.log("Updating mod [" + modName + "] from version [" + (oldMod ? oldMod.version : "N/A") + "] to [" + mod.version + "]");
 				deleteTrackedFilesOfMod(modStatus.trackedFiles[mod.name]);
 				downloadModAndInstall(mod).on("end", function(mod, trackedFiles) {
-					modCounter--;
 					modStatus.trackedFiles[mod.name] = trackedFiles;
-					if(modCounter < 1) {
-						modStatus.buildInfo = buildInfo;
-						modStatus.build = build;
-						modStatus.modpack = modpack;
-						modStatus.mcversion = data.minecraft;
-						fs.writeFileSync(MOD_STATUS_FILENAME, JSON.stringify(modStatus), {encoding: "utf8", mode: 0644});
-					}
+					decrementModCounterAndCheckForSave();
 				});
 			}
 		});
