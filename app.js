@@ -137,6 +137,14 @@ function deleteTrackedFilesOfMod(trackedFiles) {
 		try { fs.rmdirSync(dirs[i]); } catch(e) { }
 }
 
+function copyModpackJar(modpack, mcversion) {
+	if(process.env.JAR_REPO && process.env.JAR_DEST) {
+		var jarFrom = process.env.JAR_REPO.replace("%MCVERSION%", mcversion);
+		console.log("Copying JAR for [" + modpack + "] from [" + jarFrom + "] to [" + process.env.JAR_DEST + "]");
+		fs.createReadStream(jarFrom).pipe(fs.createWriteStream(process.env.JAR_DEST));
+	}
+}
+
 function installModpackFromSolder(solderURL, modpack, build, data) {
 	switch(build) {
 		case "latest":
@@ -164,6 +172,7 @@ function installModpackFromSolder(solderURL, modpack, build, data) {
 
 	if(modStatus.build == build && modStatus.modpack == modpack) {
 		console.log("Modpack [" + modpack + "] is already up to date");
+		copyModpackJar(modpack, modStatus.mcversion);
 		return;
 	}
 
@@ -179,6 +188,9 @@ function installModpackFromSolder(solderURL, modpack, build, data) {
 		});
 		res.on("end", function() {
 			data = JSON.parse(data);
+			
+			copyModpackJar(modpack, data.minecraft);
+			
 			var mods = data.mods;
 			var buildInfo = {};
 			var modCounter = 0;
@@ -206,6 +218,7 @@ function installModpackFromSolder(solderURL, modpack, build, data) {
 						modStatus.buildInfo = buildInfo;
 						modStatus.build = build;
 						modStatus.modpack = modpack;
+						modStatus.mcversion = data.minecraft;
 						fs.writeFileSync(MOD_STATUS_FILENAME, JSON.stringify(modStatus), {encoding: "utf8", mode: 0644});
 					}
 					continue;
@@ -219,6 +232,7 @@ function installModpackFromSolder(solderURL, modpack, build, data) {
 						modStatus.buildInfo = buildInfo;
 						modStatus.build = build;
 						modStatus.modpack = modpack;
+						modStatus.mcversion = data.minecraft;
 						fs.writeFileSync(MOD_STATUS_FILENAME, JSON.stringify(modStatus), {encoding: "utf8", mode: 0644});
 					}
 				});
