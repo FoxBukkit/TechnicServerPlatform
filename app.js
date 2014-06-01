@@ -109,7 +109,7 @@ function downloadModAndInstall(mod, currentRetry) {
 					if(!fs.existsSync(fileName))
 						fs.mkdirSync(fileName, 0755);
 				} else {
-					fs.writeFileSync(fileName, zipContents[fileName].asText(), {encoding: "binary", mode: 0644});
+					fs.writeFileSync(fileName, zipContents[fileName].asBinary(), {encoding: "binary", mode: 0644});
 				}
 				if(fileNames.indexOf(fileName) < 0)
 					fileNames.push(fileName);
