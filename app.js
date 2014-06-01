@@ -141,7 +141,7 @@ function copyModpackJar(modpack, mcversion) {
 	if(process.env.JAR_REPO && process.env.JAR_DEST) {
 		var jarFrom = process.env.JAR_REPO.replace("%MCVERSION%", mcversion);
 		console.log("Copying JAR for [" + modpack + "] from [" + jarFrom + "] to [" + process.env.JAR_DEST + "]");
-		fs.createReadStream(jarFrom, {encoding: "binary", mode: 0644}).pipe(fs.createWriteStream(process.env.JAR_DEST, {encoding: "binary", mode: 0644}));
+		fs.writeFileSync(process.env.JAR_DEST, fs.readFileSync(jarFrom, {encoding: "binary"}), {encoding: "binary", mode: 0644});
 	}
 }
 
