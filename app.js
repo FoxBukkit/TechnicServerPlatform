@@ -109,7 +109,7 @@ function downloadModAndInstall(mod, currentRetry) {
 					if(!fs.existsSync(fileName))
 						fs.mkdirSync(fileName, 0755);
 				} else {
-					fs.writeFileSync(fileName, zipContents[fileName], {encoding: "binary", mode: 0644});
+					fs.writeFileSync(fileName, zipContents[fileName].asText(), {encoding: "binary", mode: 0644});
 				}
 				if(fileNames.indexOf(fileName) < 0)
 					fileNames.push(fileName);
@@ -141,7 +141,7 @@ function copyModpackJar(modpack, mcversion) {
 	if(process.env.JAR_REPO && process.env.JAR_DEST) {
 		var jarFrom = process.env.JAR_REPO.replace("%MCVERSION%", mcversion);
 		console.log("Copying JAR for [" + modpack + "] from [" + jarFrom + "] to [" + process.env.JAR_DEST + "]");
-		fs.createReadStream(jarFrom).pipe(fs.createWriteStream(process.env.JAR_DEST));
+		fs.createReadStream(jarFrom, {encoding: "binary", mode: 0644}).pipe(fs.createWriteStream(process.env.JAR_DEST, {encoding: "binary", mode: 0644}));
 	}
 }
 
