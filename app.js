@@ -210,8 +210,7 @@ function installModpackFromSolder(solderURL, modpack, build, data) {
 			}
 			
 			var decrementModCounterAndCheckForSave = function() {
-				modCounter--;
-				if(modCounter < 1) {
+				if(--modCounter < 1) {
 					modStatus.buildInfo = buildInfo;
 					modStatus.build = build;
 					modStatus.modpack = modpack;
