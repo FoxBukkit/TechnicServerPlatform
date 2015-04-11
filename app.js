@@ -22,7 +22,7 @@ var zip = require("node-zip");
 
 http.globalAgent.maxSockets = 2;
 
-var TEKKIT_MAIN_SOLDER = "http://solder.technicpack.net/api/";
+var TEKKIT_MAIN_SOLDER = "https://solder.technicpack.net/api/";
 var MOD_STATUS_FILENAME = ".mod_status.json";
 
 getModpackFromSolder(TEKKIT_MAIN_SOLDER, process.argv[2], process.argv[3]).on("fail", function(solderURL, modpack, build, e) {
@@ -37,7 +37,7 @@ getModpackFromSolder(TEKKIT_MAIN_SOLDER, process.argv[2], process.argv[3]).on("f
 
 function getSolderURLFromTechnicAPI(modpack, build) {
 	var emitter = new events.EventEmitter();
-	http.get("http://www.technicpack.net/api/modpack/" + modpack, function(res) {
+	http.get("https://www.technicpack.net/api/modpack/" + modpack, function(res) {
 		var data = "";
 		res.on("data", function(chunk) {
 			data += chunk;
