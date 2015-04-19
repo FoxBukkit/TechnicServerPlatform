@@ -14,15 +14,25 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with TechnicServerPlatform.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-var request = require('request');
+var http = require("http");
+var https = require("https");
+var url = require("url");
 var fs = require("fs");
 var events = require("events");
 var crypto = require("crypto");
 var zip = require("node-zip");
 
+http.globalAgent.maxSockets = 2;
+https.globalAgent.maxSockets = 2;
+
 var TEKKIT_MAIN_SOLDER = "https://solder.technicpack.net/api/";
 var MOD_STATUS_FILENAME = ".mod_status.json";
+
+function httpGet(urlStr, cb) {
+	var urlObj = url.parse(urlStr);
+	var _http = (urlObj.protocol === 'https:') ? https : http;
+	return _http.get(urlStr, cb);
+}
 
 getModpackFromSolder(TEKKIT_MAIN_SOLDER, process.argv[2], process.argv[3]).on("fail", function(solderURL, modpack, build, e) {
 		getSolderURLFromTechnicAPI(modpack, build).on("fail", function(modpack, build, e) {
@@ -36,14 +46,19 @@ getModpackFromSolder(TEKKIT_MAIN_SOLDER, process.argv[2], process.argv[3]).on("f
 
 function getSolderURLFromTechnicAPI(modpack, build) {
 	var emitter = new events.EventEmitter();
-	request("https://www.technicpack.net/api/modpack/" + modpack, function(error, response, data) {
-		data = JSON.parse(data);
-		var solderURL = data.solder;
-		if (solderURL) {
-			emitter.emit("success", modpack, build, solderURL);
-		} else {
-			emitter.emit("fail", modpack, build, "Could not find solder: " + error);
-		}
+	httpGet("https://www.technicpack.net/api/modpack/" + modpack, function(res) {
+		var data = "";
+		res.on("data", function(chunk) {
+			data += chunk;
+		});
+		res.on("end", function() {
+			data = JSON.parse(data);
+			var solderURL = data.solder;
+			if(solderURL) {
+				emitter.emit("success", modpack, build, solderURL);
+			} else
+				emitter.emit("fail", modpack, build, "Could not find solder");
+		});
 	}).on("error", function(e) {
 		console.log("Internal error getting solder for modpack [" + modpack + "]: " + e.message);
 	});
@@ -54,19 +69,20 @@ function getModpackFromSolder(solderURL, modpack, build) {
 	if(solderURL.charAt(solderURL.length - 1) != "/")
 		solderURL += "/";
 	var emitter = new events.EventEmitter();
-	request(solderURL + "modpack/" + modpack, function(error, response, data) {
-		if (error) {
-			data = {error: error};
-		} else {
+	httpGet(solderURL + "modpack/" + modpack, function(res) {
+		var data = "";
+		res.on("data", function(chunk) {
+			data += chunk;
+		});
+		res.on("end", function() {
 			data = JSON.parse(data);
-		}
+			if(data.error) {
+				emitter.emit("fail", solderURL, modpack, build, data.error);
+				return;
+			}
 
-		if(data.error) {
-			emitter.emit("fail", solderURL, modpack, build, data.error);
-			return;
-		}
-
-		emitter.emit("success", solderURL, modpack, build, data);
+			emitter.emit("success", solderURL, modpack, build, data);
+		});		
 	}).on("error", function(e) {
 		console.log("Internal error on modpack [" + modpack + "] from solder [" + solderURL + "]: " + e.message);
 	});
@@ -81,7 +97,7 @@ function downloadModAndInstall(mod, currentRetry) {
 		return;
 	}
 	var emitter = new events.EventEmitter();
-	http.get(mod.url, function(res) {
+	httpGet(mod.url, function(res) {
 		res.setEncoding("binary");
 		var data = "";
 		var dataMD5 = crypto.createHash("md5");
@@ -174,7 +190,7 @@ function installModpackFromSolder(solderURL, modpack, build, data) {
 	else
 		console.log("Updating [" + modpack + "] from build [" + modStatus.build + "] to [" + build + "]");
 
-	http.get(solderURL + "modpack/" + modpack + "/" + build + "?side=server", function(res) {
+	httpGet(solderURL + "modpack/" + modpack + "/" + build + "?side=server", function(res) {
 		var data = "";
 		res.on("data", function(chunk) {
 			data += chunk;
