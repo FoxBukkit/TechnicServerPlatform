@@ -89,14 +89,13 @@ function getModpackFromSolder(solderURL, modpack, build) {
 	return emitter;
 }
 
-function downloadModAndInstall(mod, currentRetry) {
+function downloadModAndInstall(mod, currentRetry, emitter) {
 	if(!currentRetry)
 		currentRetry = 1;
+	emitter = emitter || new events.EventEmitter();
 	if(currentRetry > 3) {
 		console.log("ERROR on downloading mod [" + mod.url + "]");
-		return;
 	}
-	var emitter = new events.EventEmitter();
 	httpGet(mod.url, function(res) {
 		res.setEncoding("binary");
 		var data = "";
@@ -107,8 +106,13 @@ function downloadModAndInstall(mod, currentRetry) {
 		});
 		res.on("end", function() {
 			dataMD5 = dataMD5.digest("hex");
-			if(mod.md5 != dataMD5)
+			if(mod.md5 != dataMD5) {
+				if(currentRetry > 3) {
+					emitter.emit("end", mod);
+					return;
+				}
 				return downloadModAndInstall(mod, currentRetry + 1);
+			}
 			var zipFile = new zip(data);
 			var zipContents = zipFile.files;
 			var fileNames = [];
@@ -218,8 +222,13 @@ function installModpackFromSolder(solderURL, modpack, build, data) {
 				}
 			}
 			
+			var exitStatus = 0;
+			
 			var decrementModCounterAndCheckForSave = function() {
 				if(--modCounter < 1) {
+					if (exitStatus !== 0) {
+						throw 'Errors occcured';
+					}
 					modStatus.buildInfo = buildInfo;
 					modStatus.build = build;
 					modStatus.modpack = modpack;
@@ -238,7 +247,11 @@ function installModpackFromSolder(solderURL, modpack, build, data) {
 				console.log("Updating mod [" + modName + "] from version [" + (oldMod ? oldMod.version : "N/A") + "] to [" + mod.version + "]");
 				deleteTrackedFilesOfMod(modStatus.trackedFiles[mod.name]);
 				downloadModAndInstall(mod).on("end", function(mod, trackedFiles) {
-					modStatus.trackedFiles[mod.name] = trackedFiles;
+					if (trackedFiles) {
+						modStatus.trackedFiles[mod.name] = trackedFiles;
+					} else {
+						exitStatus = 1;
+					}
 					decrementModCounterAndCheckForSave();
 				});
 			}
