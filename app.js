@@ -93,7 +93,7 @@ function downloadModAndInstall(mod, currentRetry) {
 	if(!currentRetry)
 		currentRetry = 1;
 	if(currentRetry > 3) {
-		console.log("ERROR on downloading mod [" + url + "]");
+		console.log("ERROR on downloading mod [" + mod.url + "]");
 		return;
 	}
 	var emitter = new events.EventEmitter();
@@ -108,7 +108,7 @@ function downloadModAndInstall(mod, currentRetry) {
 		res.on("end", function() {
 			dataMD5 = dataMD5.digest("hex");
 			if(mod.md5 != dataMD5)
-				return downloadModAndInstall(url, md5, currentRetry + 1);
+				return downloadModAndInstall(mod, currentRetry + 1);
 			var zipFile = new zip(data);
 			var zipContents = zipFile.files;
 			var fileNames = [];
