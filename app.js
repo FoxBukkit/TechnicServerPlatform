@@ -93,9 +93,6 @@ function downloadModAndInstall(mod, currentRetry, emitter) {
 	if(!currentRetry)
 		currentRetry = 1;
 	emitter = emitter || new events.EventEmitter();
-	if(currentRetry > 3) {
-		console.log("ERROR on downloading mod [" + mod.url + "]");
-	}
 	httpGet(mod.url, function(res) {
 		res.setEncoding("binary");
 		var data = "";
@@ -108,6 +105,7 @@ function downloadModAndInstall(mod, currentRetry, emitter) {
 			dataMD5 = dataMD5.digest("hex");
 			if(mod.md5 != dataMD5) {
 				if(currentRetry > 3) {
+					console.log("ERROR on downloading mod [" + mod.url + "]");
 					emitter.emit("end", mod);
 					return;
 				}
