@@ -208,6 +208,9 @@ function installModpackFromSolder(solderURL, modpack, build, data) {
 
 			for(var i in mods) {
 				var mod = mods[i];
+				if (buildInfo[mod.name]) {
+					throw 'Duplicate mod: ' + mod.name);
+				}
 				buildInfo[mod.name] = mod;
 				modCounter++;
 			}
