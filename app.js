@@ -94,11 +94,11 @@ function downloadModAndInstall(mod, currentRetry, emitter) {
 		currentRetry = 1;
 	emitter = emitter || new events.EventEmitter();
 	httpGet(mod.url, function(res) {
-		res.setEncoding("binary");
-		var data = "";
+		//res.setEncoding("binary");
+		var data = [];
 		var dataMD5 = crypto.createHash("md5");
 		res.on("data", function(chunk) {
-			data += chunk;
+			data.push(chunk);
 			dataMD5.update(chunk);
 		});
 		res.on("end", function() {
@@ -111,7 +111,7 @@ function downloadModAndInstall(mod, currentRetry, emitter) {
 				}
 				return downloadModAndInstall(mod, currentRetry + 1);
 			}
-			var zipFile = new zip(data);
+			var zipFile = new zip(Buffer.concat(data));
 			var zipContents = zipFile.files;
 			var fileNames = [];
 			for(var fileName in zipContents) {
